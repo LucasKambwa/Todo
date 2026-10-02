@@ -2,7 +2,7 @@ name: Kanban - issue affectée
 
 on:
   issues:
-    types: [assigned]          # déclenché quand une issue est affectée
+    types: [assigned]
 
 jobs:
   en-cours:
