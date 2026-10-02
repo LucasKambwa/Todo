@@ -12,26 +12,32 @@ jobs:
       - name: Déplacer la carte dans In Progress
         env:
           GH_TOKEN: ${{ secrets.SECRET_TOKEN }}
-          OWNER: "LucasKambwa"        # Votre nom d'utilisateur GitHub exact
-          PROJECT_NUMBER: 3          # Numéro de votre projet
+          OWNER: "LucasKambwa"
+          PROJECT_NUMBER: 3
           ISSUE_URL: ${{ github.event.issue.html_url }}
         run: |
-          # 0. Vérifier le jeton : affiche ses permissions ou l'erreur exacte
-          echo "Permissions du jeton :"
-          gh api -i user | grep -i '^x-oauth-scopes'
-          
-          # 1. Identifiant interne du projet
+          set -e
+
+          echo "--- 1. Récupération de l'ID du projet ---"
           PROJECT_ID=$(gh project view "$PROJECT_NUMBER" --owner "$OWNER" --format json --jq .id)
-          
-          # 2. Identifiants du champ Status et de la colonne In Progress
+          echo "Project ID: $PROJECT_ID"
+
+          echo "--- 2. Récupération de l'ID du champ Status ---"
           FIELD_ID=$(gh project field-list "$PROJECT_NUMBER" --owner "$OWNER" --format json \
             --jq '.fields[] | select(.name=="Status") | .id')
+          echo "Field ID: $FIELD_ID"
+
+          echo "--- 3. Récupération de l'ID de la colonne In Progress ---"
           OPTION_ID=$(gh project field-list "$PROJECT_NUMBER" --owner "$OWNER" --format json \
             --jq '.fields[] | select(.name=="Status") | .options[] | select(.name=="In Progress") | .id')
-          
-          # 3. Carte de l'issue (l'ajoute au projet si elle n'y est pas encore)
+          echo "Option ID (In Progress): $OPTION_ID"
+
+          echo "--- 4. Ajout de l'issue au projet ---"
           ITEM_ID=$(gh project item-add "$PROJECT_NUMBER" --owner "$OWNER" --url "$ISSUE_URL" --format json --jq .id)
-          
-          # 4. Déplacement de la carte
+          echo "Item ID: $ITEM_ID"
+
+          echo "--- 5. Déplacement de la carte ---"
           gh project item-edit --id "$ITEM_ID" --project-id "$PROJECT_ID" \
             --field-id "$FIELD_ID" --single-select-option-id "$OPTION_ID"
+
+          echo "Carte déplacée dans In Progress avec succès !"
